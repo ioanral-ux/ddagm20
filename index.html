@@ -118,7 +118,14 @@
 
   /* Round staging */
   #stagingList{list-style:none; margin:14px 0; padding:0; display:flex; flex-direction:column; gap:6px;}
-  #stagingList li{
+  .ex-icon{display:inline-flex; align-items:center; justify-content:center; flex:none; color:var(--olive);}
+.ex-icon svg{width:100%; height:100%; display:block;}
+.ex-icon.sz-sm{width:26px; height:26px;}
+.ex-icon.sz-md{width:34px; height:34px;}
+.ex-icon.sz-lg{width:110px; height:110px; margin:0 auto;}
+#player.resting .ex-icon.sz-lg{color:var(--amber);}
+
+#stagingList li{
     display:flex; align-items:center; gap:10px; padding:8px 10px;
     background:var(--bg-alt); border-left:3px solid var(--olive-dim); font-size:13px;
   }
@@ -184,7 +191,7 @@
   .progress-fill{height:4px; background:var(--olive); width:0%; transition:width 0.3s ease;}
   #player.resting .progress-fill{background:var(--amber);}
 
-  .dial-wrap{position:relative; width:min(74vw,300px); height:min(74vw,300px); margin:18px auto;}
+  .dial-wrap{position:relative; width:min(56vw,220px); height:min(56vw,220px); margin:10px auto 4px;}
   .dial-wrap svg{width:100%; height:100%; transform:rotate(-90deg);}
   .dial-track{fill:none; stroke:var(--line); stroke-width:6;}
   .dial-fill{fill:none; stroke:var(--olive); stroke-width:6; stroke-linecap:round; transition:stroke-dashoffset 0.3s linear;}
@@ -192,10 +199,11 @@
   .dial-center{
     position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
   }
-  .dial-time{font-family:'DM Mono',monospace; font-size:46px; color:var(--bone); line-height:1;}
+  .dial-time{font-family:'DM Mono',monospace; font-size:38px; color:var(--bone); line-height:1;}
   .dial-mode-label{font-size:10.5px; letter-spacing:0.15em; color:var(--muted); margin-top:6px; text-transform:uppercase;}
 
-  .step-name{font-size:26px; margin:8px 0 2px; color:var(--bone);}
+  .ex-icon.sz-lg{width:84px; height:84px; margin:2px auto 6px;}
+  .step-name{font-size:23px; margin:4px 0 2px; color:var(--bone);}
   .step-meta{font-size:12.5px; color:var(--muted); margin-bottom:10px;}
   .next-up{font-size:12px; color:var(--muted); margin-top:8px;}
   .next-up b{color:var(--olive);}
@@ -254,6 +262,7 @@
           <label>Exercise</label>
           <select id="exSelect"></select>
         </div>
+        <div class="ex-icon sz-md" id="pickerIcon"></div>
         <div class="field" id="customNameField" style="display:none;">
           <label>Custom name</label>
           <input type="text" id="customName" placeholder="e.g. Farmer carry">
@@ -366,6 +375,7 @@
         <div class="dial-mode-label" id="dialModeLabel">Work</div>
       </div>
     </div>
+    <div class="ex-icon sz-lg" id="playerIcon"></div>
     <div class="step-name" id="stepName">Push-up</div>
     <div class="step-meta" id="stepMeta"></div>
 
@@ -396,6 +406,24 @@
 <script>
 (function(){
 "use strict";
+
+const EX_ICONS = {"Rest": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"16\" y=\"11\" width=\"6\" height=\"26\" rx=\"1.5\"/><rect x=\"26\" y=\"11\" width=\"6\" height=\"26\" rx=\"1.5\"/></g></svg>", "Push-up": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"6\" y1=\"34\" x2=\"42\" y2=\"34\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-opacity=\"0.35\" stroke-linecap=\"round\"/><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"17\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><polyline points=\"14,19 24,23 37,29\"/><polyline points=\"15,20 16,27 17,34\"/></g></svg>", "Incline Push-up": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"6\" y1=\"34\" x2=\"42\" y2=\"34\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-opacity=\"0.35\" stroke-linecap=\"round\"/><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"15\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><polyline points=\"14,17 24,22 37,30\"/><polyline points=\"15,18 16,24 17,29\"/><line x1=\"11\" y1=\"29\" x2=\"23\" y2=\"29\"/><line x1=\"11\" y1=\"29\" x2=\"11\" y2=\"33\"/><line x1=\"23\" y1=\"29\" x2=\"23\" y2=\"33\"/></g></svg>", "Dead Bug (per side)": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"6\" y1=\"34\" x2=\"42\" y2=\"34\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-opacity=\"0.35\" stroke-linecap=\"round\"/><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"13\" cy=\"25\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><polyline points=\"16,26 32,26\"/><line x1=\"17\" y1=\"25\" x2=\"13\" y2=\"12\"/><line x1=\"31\" y1=\"26\" x2=\"35\" y2=\"12\"/><line x1=\"19\" y1=\"26\" x2=\"17\" y2=\"30\"/><line x1=\"29\" y1=\"26\" x2=\"31\" y2=\"30\"/></g></svg>", "Bird-Dog (per side)": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"6\" y1=\"34\" x2=\"42\" y2=\"34\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-opacity=\"0.35\" stroke-linecap=\"round\"/><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"19\" r=\"3.4\" fill=\"currentColor\" stroke=\"none\"/><polyline points=\"14,22 32,22\"/><line x1=\"16\" y1=\"22\" x2=\"16\" y2=\"32\"/><line x1=\"28\" y1=\"22\" x2=\"28\" y2=\"32\"/><line x1=\"14\" y1=\"22\" x2=\"8\" y2=\"13\"/><line x1=\"32\" y1=\"22\" x2=\"40\" y2=\"14\"/></g></svg>", "Glute Bridge": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"6\" y1=\"34\" x2=\"42\" y2=\"34\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-opacity=\"0.35\" stroke-linecap=\"round\"/><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"29\" r=\"3.4\" fill=\"currentColor\" stroke=\"none\"/><polyline points=\"14,30 22,22 30,28 36,30\"/></g></svg>", "Plank": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"6\" y1=\"34\" x2=\"42\" y2=\"34\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-opacity=\"0.35\" stroke-linecap=\"round\"/><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"17\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><polyline points=\"14,19 37,28\"/><line x1=\"15\" y1=\"20\" x2=\"15\" y2=\"32\"/></g></svg>", "Side Plank (per side)": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"6\" y1=\"34\" x2=\"42\" y2=\"34\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-opacity=\"0.35\" stroke-linecap=\"round\"/><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"14\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><polyline points=\"15,16 34,26\"/><line x1=\"16\" y1=\"17\" x2=\"16\" y2=\"30\"/><line x1=\"17\" y1=\"17\" x2=\"24\" y2=\"8\"/></g></svg>", "Standing March / Fast March": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"24\" cy=\"8\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><line x1=\"24\" y1=\"12\" x2=\"24\" y2=\"24\"/><line x1=\"24\" y1=\"24\" x2=\"22\" y2=\"36\"/><polyline points=\"24,24 30,26 28,18\"/><line x1=\"24\" y1=\"14\" x2=\"18\" y2=\"20\"/><line x1=\"24\" y1=\"14\" x2=\"30\" y2=\"10\"/></g></svg>", "Step-Touch": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"24\" cy=\"8\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><line x1=\"24\" y1=\"12\" x2=\"24\" y2=\"24\"/><line x1=\"24\" y1=\"24\" x2=\"16\" y2=\"36\"/><line x1=\"24\" y1=\"24\" x2=\"32\" y2=\"36\"/><line x1=\"24\" y1=\"15\" x2=\"14\" y2=\"12\"/><line x1=\"24\" y1=\"15\" x2=\"34\" y2=\"18\"/></g></svg>", "Punches": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"24\" cy=\"8\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><line x1=\"24\" y1=\"12\" x2=\"24\" y2=\"26\"/><line x1=\"24\" y1=\"26\" x2=\"20\" y2=\"37\"/><line x1=\"24\" y1=\"26\" x2=\"29\" y2=\"37\"/><line x1=\"24\" y1=\"14\" x2=\"19\" y2=\"16\"/><line x1=\"24\" y1=\"15\" x2=\"34\" y2=\"13\"/></g></svg>", "Cross-Body Crunch": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"6\" y1=\"34\" x2=\"42\" y2=\"34\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-opacity=\"0.35\" stroke-linecap=\"round\"/><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"14\" cy=\"15\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><polyline points=\"16,17 22,24 30,28\"/><line x1=\"30\" y1=\"28\" x2=\"36\" y2=\"19\"/><line x1=\"16\" y1=\"18\" x2=\"28\" y2=\"22\"/></g></svg>", "Incline Mountain Climber": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"6\" y1=\"34\" x2=\"42\" y2=\"34\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-opacity=\"0.35\" stroke-linecap=\"round\"/><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"15\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><polyline points=\"14,17 29,25\"/><line x1=\"15\" y1=\"18\" x2=\"15\" y2=\"25\"/><line x1=\"9\" y1=\"25\" x2=\"19\" y2=\"25\"/><line x1=\"29\" y1=\"25\" x2=\"38\" y2=\"30\"/><polyline points=\"29,25 24,20 27,15\"/></g></svg>", "Easy Walk": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"24\" cy=\"8\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><line x1=\"24\" y1=\"12\" x2=\"24\" y2=\"25\"/><line x1=\"24\" y1=\"25\" x2=\"30\" y2=\"36\"/><line x1=\"24\" y1=\"25\" x2=\"19\" y2=\"36\"/><line x1=\"24\" y1=\"15\" x2=\"30\" y2=\"20\"/><line x1=\"24\" y1=\"15\" x2=\"18\" y2=\"12\"/></g></svg>", "Mobility (hips/ankles/shoulders)": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"24\" cy=\"8\" r=\"3.6\" fill=\"currentColor\" stroke=\"none\"/><line x1=\"24\" y1=\"12\" x2=\"24\" y2=\"26\"/><line x1=\"24\" y1=\"26\" x2=\"20\" y2=\"37\"/><line x1=\"24\" y1=\"26\" x2=\"28\" y2=\"37\"/><line x1=\"24\" y1=\"13\" x2=\"18\" y2=\"4\"/><line x1=\"24\" y1=\"13\" x2=\"30\" y2=\"4\"/></g></svg>", "Custom…": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"16\" y1=\"24\" x2=\"32\" y2=\"24\"/><line x1=\"12\" y1=\"19\" x2=\"12\" y2=\"29\"/><line x1=\"9\" y1=\"19\" x2=\"9\" y2=\"29\"/><line x1=\"36\" y1=\"19\" x2=\"36\" y2=\"29\"/><line x1=\"39\" y1=\"19\" x2=\"39\" y2=\"29\"/></g></svg>", "Challenge": "<svg viewBox=\"0 0 48 48\" xmlns=\"http://www.w3.org/2000/svg\"><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"34.0\" y1=\"24.0\" x2=\"44.0\" y2=\"24.0\"/><line x1=\"31.1\" y1=\"31.1\" x2=\"38.1\" y2=\"38.1\"/><line x1=\"24.0\" y1=\"34.0\" x2=\"24.0\" y2=\"44.0\"/><line x1=\"16.9\" y1=\"31.1\" x2=\"9.9\" y2=\"38.1\"/><line x1=\"14.0\" y1=\"24.0\" x2=\"4.0\" y2=\"24.0\"/><line x1=\"16.9\" y1=\"16.9\" x2=\"9.9\" y2=\"9.9\"/><line x1=\"24.0\" y1=\"14.0\" x2=\"24.0\" y2=\"4.0\"/><line x1=\"31.1\" y1=\"16.9\" x2=\"38.1\" y2=\"9.9\"/><circle cx=\"24\" cy=\"24\" r=\"5.5\" fill=\"currentColor\" stroke=\"none\"/></g></svg>"};
+const ICON_MATCHERS = [
+  ['Incline Push-up','Incline Push-up'],['Push-up','Push-up'],
+  ['Incline Mountain Climber','Incline Mountain Climber'],
+  ['Side Plank','Side Plank (per side)'],['Plank','Plank'],
+  ['Dead Bug','Dead Bug (per side)'],['Bird-Dog','Bird-Dog (per side)'],
+  ['Glute Bridge','Glute Bridge'],['March','Standing March / Fast March'],
+  ['Step-Touch','Step-Touch'],['Punches','Punches'],
+  ['Cross-Body Crunch','Cross-Body Crunch'],['Walk','Easy Walk'],
+  ['Mobility','Mobility (hips/ankles/shoulders)'],['Rest','Rest']
+];
+function getIcon(step){
+  if(step.mode==='amrap') return EX_ICONS['Challenge'];
+  if(EX_ICONS[step.name]) return EX_ICONS[step.name];
+  for(const [sub,key] of ICON_MATCHERS){ if(step.name.includes(sub)) return EX_ICONS[key]; }
+  return EX_ICONS['Custom…'];
+}
 
 /* Tiny silent looping clip used to stop the screen from auto-sleeping on
    browsers that don't support the Screen Wake Lock API (e.g. iOS Safari). */
@@ -634,6 +662,7 @@ function refreshAddForm(){
   const ex = LIBRARY[idx];
   const isCustom = ex.mode === 'custom';
   const isRest = ex.mode === 'rest';
+  $('#pickerIcon').innerHTML = EX_ICONS[ex.name] || EX_ICONS['Custom…'];
   customNameField.style.display = isCustom ? 'flex' : 'none';
   modeField.style.display = isRest ? 'none' : 'flex';
   if(isRest){
@@ -681,7 +710,16 @@ function renderStaging(){
     const li = document.createElement('li');
     li.className = 'mode-' + s.mode;
     const badge = s.mode==='reps' ? (s.reps+'×') : fmtClock(s.seconds);
-    li.innerHTML = '<span class="badge">'+badge+'</span><span class="staging-name">'+s.name+'</span>';
+    const icon = document.createElement('div');
+    icon.className = 'ex-icon sz-sm';
+    icon.innerHTML = getIcon(s);
+    li.appendChild(icon);
+    const badgeSpan = document.createElement('span');
+    badgeSpan.className = 'badge'; badgeSpan.textContent = badge;
+    li.appendChild(badgeSpan);
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'staging-name'; nameSpan.textContent = s.name;
+    li.appendChild(nameSpan);
     const rm = document.createElement('button');
     rm.className='small ghost'; rm.textContent='✕';
     rm.addEventListener('click', ()=>{ staging.splice(i,1); renderStaging(); });
@@ -725,6 +763,11 @@ function renderProgram(){
     const idxSpan = document.createElement('span');
     idxSpan.className='idx'; idxSpan.textContent = String(i+1).padStart(2,'0');
     li.appendChild(idxSpan);
+
+    const icon = document.createElement('div');
+    icon.className = 'ex-icon sz-sm';
+    icon.innerHTML = getIcon(s);
+    li.appendChild(icon);
 
     const nm = document.createElement('div');
     nm.className='nm';
@@ -967,6 +1010,7 @@ function loadStep(i){
   $('#progLabel').textContent = 'Step ' + (i+1) + ' / ' + flat.length;
   $('#progFill').style.width = Math.round((i/flat.length)*100) + '%';
   $('#stepName').textContent = s.name;
+  $('#playerIcon').innerHTML = getIcon(s);
   $('#stepMeta').textContent = s.meta || '';
   const next = flat[i+1];
   $('#nextUp').innerHTML = next ? 'Next: <b>' + next.name + '</b>' : 'Last step — nice work.';
