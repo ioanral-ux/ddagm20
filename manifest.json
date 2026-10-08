@@ -1,9 +1,9 @@
 {
-  "id": "./?app=ddagm20",
+  "id": "./?app=ddagm20-v2",
   "name": "DDAGM20 — Drop down and give me 20",
   "short_name": "DDAGM20",
   "description": "Build custom workouts and run them with a voice-guided interval timer.",
-  "start_url": "./index.html",
+  "start_url": "./index.html?pwa=2",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
